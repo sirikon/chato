@@ -5,6 +5,8 @@ if (!process.env.ADMIN_CHAT_ID) throw new Error("ADMIN_CHAT_ID missing");
 
 const botToken: string = process.env.BOT_TOKEN;
 const adminChatId: number = parseInt(process.env.ADMIN_CHAT_ID);
+const webhookURL: string | null = process.env.WEBHOOK_URL || null;
+const webhookPATH: string | null = process.env.WEBHOOK_PATH || null;
 
 const bot = new Telegraf(botToken);
 
@@ -56,7 +58,19 @@ bot.catch((err, ctx) => {
   console.log(err);
 })
 
-bot.launch();
+if (webhookURL) {
+  console.log('Launching bot with webhook');
+  bot.launch({
+    webhook: {
+      domain: webhookURL,
+      hookPath: webhookPATH || undefined,
+      port: 80
+    }
+  })
+} else {
+  console.log('Launching bot with connection pooling')
+  bot.launch();
+}
 console.log('Bot running');
 
 // Enable graceful stop
