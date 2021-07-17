@@ -1,11 +1,10 @@
 import { Telegraf } from 'telegraf';
+import { getRequiredEnvVar } from '../utils'
 
 export default function admissions(bot: Telegraf) {
   console.log('Admissions -- configuring');
   
-  if (!process.env.ADMISSIONS_CHAT_ID) throw new Error("ADMISSIONS_CHAT_ID missing");
-
-  const admissionsChatId: number = parseInt(process.env.ADMISSIONS_CHAT_ID);
+  const admissionsChatId: number = parseInt(getRequiredEnvVar('ADMISSIONS_CHAT_ID'));
 
   const expectAnuncioIndex: { [key: number]: boolean } = {};
 
@@ -13,11 +12,11 @@ export default function admissions(bot: Telegraf) {
     if (ctx.chat.id === admissionsChatId) return await next();
 
     ctx.replyWithHTML(`
-  <b>Henlo</b>. Soy Chato, el monete que acepta los anuncios para Monke Bazar.
+<b>Henlo</b>. Soy Chato, el monete que acepta los anuncios para Monke Bazar.
 
-  Estas son las cosas con las que puedo ayudarte:
-  /anuncio - Dame anuncios para publicar.
-  /help - Muestra la ayuda.
+Estas son las cosas con las que puedo ayudarte:
+/anuncio - Dame anuncios para publicar.
+/help - Muestra la ayuda.
     `.trim());
   });
 
@@ -25,7 +24,7 @@ export default function admissions(bot: Telegraf) {
     if (ctx.chat.id === admissionsChatId) return await next();
 
     expectAnuncioIndex[ctx.chat.id] = true;
-    return await ctx.reply('Mándame el anuncio! Si quieres que tenga imágenes, texto, links... envíamelo todo junto en un único mensaje.');
+    return await ctx.reply('Mándame el anuncio! Si quieres que tenga una imagen, texto, links... envíamelo todo junto en un único mensaje.');
   })
 
   bot.on('message', async (ctx, next) => {
@@ -49,10 +48,10 @@ export default function admissions(bot: Telegraf) {
       expectAnuncioIndex[ctx.chat.id] = false;
 
       ctx.forwardMessage(admissionsChatId);
-      return await ctx.reply("Recibido! Tan pronto como podamos lo publicamos");
+      return await ctx.reply("Recibido! Lo publicaremos tan pronto como podamos.");
     }
 
-    ctx.reply('No se de qué hablas UwU. Escribe /help y así nos entendemos.');
+    await ctx.reply('No se de qué hablas UwU. Escribe /help y así nos entendemos.');
   })
 
 }
