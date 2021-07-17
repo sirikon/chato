@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  chato:
+    image: "sirikon/chato:${CHATO_TAG:-dev}"
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile

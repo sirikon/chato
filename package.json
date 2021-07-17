@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "ts-node src/main.ts"
+    "start": "ts-node src/main.ts",
+    "build": "tsc --project ."
   },
   "dependencies": {
     "telegraf": "^4.4.0"
