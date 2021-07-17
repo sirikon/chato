@@ -1,14 +1,16 @@
 import { Telegraf } from 'telegraf';
 
-export default function chato(bot: Telegraf) {
+export default function admissions(bot: Telegraf) {
   
-  if (!process.env.ADMIN_CHAT_ID) throw new Error("ADMIN_CHAT_ID missing");
+  if (!process.env.ADMISSIONS_CHAT_ID) throw new Error("ADMISSIONS_CHAT_ID missing");
 
-  const adminChatId: number = parseInt(process.env.ADMIN_CHAT_ID);
+  const admissionsChatId: number = parseInt(process.env.ADMISSIONS_CHAT_ID);
 
   const expectAnuncioIndex: { [key: number]: boolean } = {};
 
-  bot.command('help', async (ctx) => {
+  bot.command('help', async (ctx, next) => {
+    if (ctx.chat.id === admissionsChatId) return await next();
+
     ctx.replyWithHTML(`
   <b>Henlo</b>. Soy Chato, el monete que acepta los anuncios para Monke Bazar.
 
@@ -18,15 +20,17 @@ export default function chato(bot: Telegraf) {
     `.trim());
   });
 
-  bot.command('anuncio', async (ctx) => {
+  bot.command('anuncio', async (ctx, next) => {
+    if (ctx.chat.id === admissionsChatId) return await next();
+
     expectAnuncioIndex[ctx.chat.id] = true;
     return await ctx.reply('Mándame el anuncio! Si quieres que tenga imágenes, texto, links... envíamelo todo junto en un único mensaje.');
   })
 
-  bot.on('message', async (ctx) => {
-    //console.log(ctx.message);
+  bot.on('message', async (ctx, next) => {
+    if (ctx.chat.id === admissionsChatId) return await next();
 
-    if (ctx.chat.type === 'group' || ctx.chat.type === 'supergroup') {
+    if ((ctx.chat.type === 'group' || ctx.chat.type === 'supergroup')) {
       try {
         await ctx.replyWithHTML('<b>UH UH - AH AHH!</b>');
         await ctx.replyWithSticker('CAACAgQAAxkBAAN-YPLo_EkUjqprsIzE_ub1Jlipt8wAAtQNAAJmbahSt-tZ1rrO9kggBA');
@@ -43,7 +47,7 @@ export default function chato(bot: Telegraf) {
     if (expectAnuncioIndex[ctx.chat.id]) {
       expectAnuncioIndex[ctx.chat.id] = false;
 
-      ctx.forwardMessage(adminChatId);
+      ctx.forwardMessage(admissionsChatId);
       return await ctx.reply("Recibido! Tan pronto como podamos lo publicamos");
     }
 

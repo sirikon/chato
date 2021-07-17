@@ -1,12 +1,12 @@
 import * as express from 'express';
 import { Telegraf } from 'telegraf';
 
-import chato from './bots/chato'
-import falafel from './bots/falafel'
+import admissions from './bots/admissions'
+import reports from './bots/reports'
 
 const bots: { [key: string]: (bot: Telegraf) => void } = {
-  chato,
-  falafel
+  admissions,
+  reports
 }
 
 async function start() {
