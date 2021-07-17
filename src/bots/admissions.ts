@@ -1,6 +1,7 @@
 import { Telegraf } from 'telegraf';
 
 export default function admissions(bot: Telegraf) {
+  console.log('Admissions -- configuring');
   
   if (!process.env.ADMISSIONS_CHAT_ID) throw new Error("ADMISSIONS_CHAT_ID missing");
 
