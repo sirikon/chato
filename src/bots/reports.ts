@@ -6,8 +6,7 @@ export default function reports(bot: Telegraf) {
 
   const reportsChatId: number = parseInt(getRequiredEnvVar('REPORTS_CHAT_ID'));
 
-  bot.on('message', async (ctx) => {
-    console.log(ctx.message);
+  bot.on('message', async (ctx, next) => {
     if (ctx.chat.id === reportsChatId) {
       const msg = (ctx.message as any);
       if (msg.reply_to_message && msg.reply_to_message.forward_from) {
@@ -17,6 +16,7 @@ export default function reports(bot: Telegraf) {
       }
       return;
     }
+    if (ctx.chat.type !== 'private') return await next();
     ctx.forwardMessage(reportsChatId);
   })
 
