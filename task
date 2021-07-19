@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 
 commands=(
+  run
   docker-publish
 )
 
+function run {(
+  export $(cat .env | xargs)
+  npm -s start
+)}
 
 function docker-publish {(
   version="$(date +'%Y%m%d_%H%M%S')"
