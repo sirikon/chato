@@ -1,6 +1,6 @@
 import { Telegraf } from 'telegraf';
 import { User } from 'telegraf/typings/core/types/typegram';
-import { getRequiredEnvVar } from '../utils'
+import { getRequiredEnvVar, log } from '../utils'
 
 export default function admissions(bot: Telegraf) {
   const admissionsChatId: number = parseInt(getRequiredEnvVar('ADMISSIONS_CHAT_ID'));
@@ -37,8 +37,12 @@ Estas son las cosas con las que puedo ayudarte:
         await ctx.replyWithHTML('YEET!');
         await ctx.reply('https://youtu.be/c1s3Iekns9k');
         await ctx.leaveChat();
+        log.info('YEETed group', { group: ctx.chat });
       } catch(error) {
-        if (error.message.indexOf('bot is not a member of the supergroup chat') === -1) throw error;
+        if (error.message.indexOf('bot is not a member') === -1) {
+          log.error(`Error while YEETing group=${ctx.chat.id}:`, error);
+          throw error;
+        }
       }
       return;
     }
