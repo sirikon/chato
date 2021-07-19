@@ -1,9 +1,8 @@
 import { Telegraf } from 'telegraf';
+import { User } from 'telegraf/typings/core/types/typegram';
 import { getRequiredEnvVar } from '../utils'
 
 export default function admissions(bot: Telegraf) {
-  console.log('Admissions -- configuring');
-  
   const admissionsChatId: number = parseInt(getRequiredEnvVar('ADMISSIONS_CHAT_ID'));
 
   const expectAnuncioIndex: { [key: number]: boolean } = {};
@@ -47,11 +46,20 @@ Estas son las cosas con las que puedo ayudarte:
     if (expectAnuncioIndex[ctx.chat.id]) {
       expectAnuncioIndex[ctx.chat.id] = false;
 
-      ctx.forwardMessage(admissionsChatId);
+      const forwardedMessage = await ctx.forwardMessage(admissionsChatId);
+      await ctx.telegram.sendMessage(
+        admissionsChatId,
+        buildFrom(ctx.message.from),
+        { reply_to_message_id: forwardedMessage.message_id })
       return await ctx.reply("Recibido! Lo publicaremos tan pronto como podamos.");
     }
 
     await ctx.reply('No se de qué hablas UwU. Escribe /help y así nos entendemos.');
   })
 
+}
+
+function buildFrom(user: User) {
+  if (user.username) return `Anuncio de @${user.username}`;
+  return `Anuncio de ${user.first_name} ${user.last_name || ''} (id=${user.id})`;
 }
