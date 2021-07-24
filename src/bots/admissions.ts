@@ -12,7 +12,7 @@ const commands = [
 
 export default async function admissions(bot: Telegraf) {
   await setCommands(bot);
-  
+
   ignoreAdmissionsChat(bot)
   groupChatEasterEgg(bot)
 
@@ -84,7 +84,7 @@ function adsCommand(bot: Telegraf) {
 
   bot.on('message', async (ctx, next) => {
     if (!expectAnuncioIndex[ctx.chat.id]) return await next();
-    
+
     expectAnuncioIndex[ctx.chat.id] = false;
 
     const forwardedMessage = await ctx.forwardMessage(admissionsChatId);

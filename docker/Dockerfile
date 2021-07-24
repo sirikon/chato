@@ -11,6 +11,6 @@ FROM node:16-alpine AS final
 WORKDIR /app
 COPY --from=build /app/package.json .
 COPY --from=build /app/package-lock.json .
-COPY --from=build /app/out ./out
 RUN npm install --production
+COPY --from=build /app/out ./out
 CMD node ./out/main.js
