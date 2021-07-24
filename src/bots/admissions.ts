@@ -92,7 +92,7 @@ function adsCommand(bot: Telegraf) {
       admissionsChatId,
       buildFrom(ctx.message.from),
       { reply_to_message_id: forwardedMessage.message_id, parse_mode: 'HTML' })
-    return await ctx.reply("Recibido! Lo publicaremos tan pronto como podamos.");
+    return await ctx.reply("Recibido! Vamos a revisarlo y enviarlo en cuanto podamos.");
   })
 
 }
