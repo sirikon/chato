@@ -1,69 +1,122 @@
-import { Telegraf } from 'telegraf';
-import { User } from 'telegraf/typings/core/types/typegram';
+import { Telegraf, Context } from 'telegraf';
+import { User, Update } from 'telegraf/typings/core/types/typegram';
 import { getRequiredEnvVar, log } from '../utils'
 
-export default function admissions(bot: Telegraf) {
-  const admissionsChatId: number = parseInt(getRequiredEnvVar('ADMISSIONS_CHAT_ID'));
+const admissionsChatId: number = parseInt(getRequiredEnvVar('ADMISSIONS_CHAT_ID'));
+const expectAnuncioIndex: { [key: number]: boolean } = {};
 
-  const expectAnuncioIndex: { [key: number]: boolean } = {};
+const commands = [
+  ['anuncio', 'Dame anuncios para publicar.'],
+  ['help', 'Muestra la ayuda.']
+];
 
-  bot.command('help', async (ctx, next) => {
-    if (ctx.chat.id === admissionsChatId) return await next();
+export default async function admissions(bot: Telegraf) {
+  await setCommands(bot);
+  
+  ignoreAdmissionsChat(bot)
+  groupChatEasterEgg(bot)
 
-    ctx.replyWithHTML(`
-<b>Henlo</b>. Soy Chato, el monete que acepta los anuncios para Monke Bazar.
+  helpCommand(bot);
+  adsCommand(bot);
 
-Estas son las cosas con las que puedo ayudarte:
-/anuncio - Dame anuncios para publicar.
-/help - Muestra la ayuda.
-    `.trim());
+  fallback(bot);
+}
+
+async function setCommands(bot: Telegraf) {
+  await bot.telegram.setMyCommands(commands
+    .map(([command, description]) => ({ command, description })))
+}
+
+function ignoreAdmissionsChat(bot: Telegraf) {
+  bot.on('message', async (ctx, next) => {
+    if (!isAdmissionsChat(ctx)) await next();
+  });
+}
+
+function groupChatEasterEgg(bot: Telegraf) {
+  bot.on('message', async (ctx, next) => {
+    if (!isUnknownGroupChat(ctx)) return await next();
+
+    try {
+      await ctx.replyWithHTML('<b>UH UH - AH AHH!</b>');
+      await ctx.replyWithSticker('CAACAgQAAxkBAAN-YPLo_EkUjqprsIzE_ub1Jlipt8wAAtQNAAJmbahSt-tZ1rrO9kggBA');
+      // await ctx.replyWithAudio('AwACAgQAAxkBAAOAYPLqHZ85FBoyKpmhynS-vQl3HF8AAjwIAAK6UJlTZ5anJo_44N0gBA');
+      await ctx.replyWithHTML('YEET!');
+      await ctx.reply('https://youtu.be/c1s3Iekns9k');
+      await ctx.leaveChat();
+      log.info('YEETed group', { group: ctx.chat });
+    } catch(error) {
+      if (error.message.indexOf('bot is not a member') === -1) {
+        log.error(`Error while YEETing group=${ctx.chat.id}:`, error);
+        throw error;
+      }
+    }
+  });
+}
+
+function helpCommand(bot: Telegraf) {
+
+  bot.command('help', async (ctx) => {
+    const commands = [
+      ['anuncio', 'Dame anuncios para publicar.'],
+      ['help', 'Muestra la ayuda.']
+    ];
+
+    const introduction =
+      '<b>Henlo</b>. Soy Chato, el monete que acepta los anuncios para Monke Bazar.';
+
+    await ctx.replyWithHTML([
+      introduction,
+      '',
+      ...commands.map(([command, description]) => `/${command} - ${description}`)
+    ].join('\n'));
   });
 
-  bot.command('anuncio', async (ctx, next) => {
-    if (ctx.chat.id === admissionsChatId) return await next();
+}
 
+function adsCommand(bot: Telegraf) {
+
+  bot.command('anuncio', async (ctx) => {
     expectAnuncioIndex[ctx.chat.id] = true;
-    return await ctx.reply('Mándame el anuncio! Si quieres que tenga una imagen, texto, links... envíamelo todo junto en un único mensaje.');
-  })
+    return await ctx.reply(
+      'Mándame el anuncio! Si quieres que tenga una imagen, texto, links... envíamelo todo junto en un único mensaje.');
+  });
 
   bot.on('message', async (ctx, next) => {
-    if (ctx.chat.id === admissionsChatId) return await next();
+    if (!expectAnuncioIndex[ctx.chat.id]) return await next();
+    
+    expectAnuncioIndex[ctx.chat.id] = false;
 
-    if ((ctx.chat.type === 'group' || ctx.chat.type === 'supergroup')) {
-      try {
-        await ctx.replyWithHTML('<b>UH UH - AH AHH!</b>');
-        await ctx.replyWithSticker('CAACAgQAAxkBAAN-YPLo_EkUjqprsIzE_ub1Jlipt8wAAtQNAAJmbahSt-tZ1rrO9kggBA');
-        // await ctx.replyWithAudio('AwACAgQAAxkBAAOAYPLqHZ85FBoyKpmhynS-vQl3HF8AAjwIAAK6UJlTZ5anJo_44N0gBA');
-        await ctx.replyWithHTML('YEET!');
-        await ctx.reply('https://youtu.be/c1s3Iekns9k');
-        await ctx.leaveChat();
-        log.info('YEETed group', { group: ctx.chat });
-      } catch(error) {
-        if (error.message.indexOf('bot is not a member') === -1) {
-          log.error(`Error while YEETing group=${ctx.chat.id}:`, error);
-          throw error;
-        }
-      }
-      return;
-    }
-
-    if (expectAnuncioIndex[ctx.chat.id]) {
-      expectAnuncioIndex[ctx.chat.id] = false;
-
-      const forwardedMessage = await ctx.forwardMessage(admissionsChatId);
-      await ctx.telegram.sendMessage(
-        admissionsChatId,
-        buildFrom(ctx.message.from),
-        { reply_to_message_id: forwardedMessage.message_id })
-      return await ctx.reply("Recibido! Lo publicaremos tan pronto como podamos.");
-    }
-
-    await ctx.reply('No se de qué hablas UwU. Escribe /help y así nos entendemos.');
+    const forwardedMessage = await ctx.forwardMessage(admissionsChatId);
+    await ctx.telegram.sendMessage(
+      admissionsChatId,
+      buildFrom(ctx.message.from),
+      { reply_to_message_id: forwardedMessage.message_id, parse_mode: 'HTML' })
+    return await ctx.reply("Recibido! Lo publicaremos tan pronto como podamos.");
   })
 
 }
 
+function fallback(bot: Telegraf) {
+  bot.on('message', async (ctx) => {
+    await ctx.reply('No se de qué hablas UwU. Escribe /help y así nos entendemos.');
+  })
+}
+
+function isAdmissionsChat(ctx: Context<Update>) {
+  if (!ctx.chat) return false;
+  return ctx.chat.id === admissionsChatId;
+}
+
+function isUnknownGroupChat(ctx: Context<Update>) {
+  if (!ctx.chat) return false;
+  if (isAdmissionsChat(ctx)) return false;
+  if (ctx.chat.type === 'private') return false;
+  return true;
+}
+
 function buildFrom(user: User) {
-  if (user.username) return `Anuncio de @${user.username}`;
-  return `Anuncio de ${user.first_name} ${user.last_name || ''} (id=${user.id})`;
+  const userDisplayName = user.username || (`${user.first_name}${user.last_name ? ' ' + user.last_name : ''}`);
+  const userLink = `<a href="tg://user?id=${user.id}">${userDisplayName}</a>`
+  return `Anuncio de ${userLink}`;
 }

@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 import { getRequiredEnvVar } from '../utils'
 
-export default function reports(bot: Telegraf) {
+export default async function reports(bot: Telegraf) {
   const reportsChatId: number = parseInt(getRequiredEnvVar('REPORTS_CHAT_ID'));
 
   bot.on('message', async (ctx, next) => {

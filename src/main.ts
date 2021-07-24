@@ -5,7 +5,7 @@ import { log } from './utils'
 import admissions from './bots/admissions'
 import reports from './bots/reports'
 
-const bots: { [key: string]: (bot: Telegraf) => void } = {
+const bots: { [key: string]: (bot: Telegraf) => Promise<void> } = {
   admissions,
   reports
 }
@@ -27,7 +27,7 @@ async function startUsingWebhooks() {
   for(const botName in bots) {
     const botNameUpper = botName.toUpperCase();
     const webhookPath = getRequiredEnvVar(`${botNameUpper}_WEBHOOK_PATH`);
-    const bot = initBot(botName);
+    const bot = await initBot(botName);
     await bot.telegram.setWebhook(`${webhookURL}${webhookPath}`);
     app.use(bot.webhookCallback(webhookPath))
     log.info(`Bot ${botName} configured`);
@@ -47,7 +47,7 @@ async function startUsingPolling() {
   log.info('Using polling');
   const botsInstances: Telegraf[] = [];
   for(const botName in bots) {
-    const bot = initBot(botName);
+    const bot = await initBot(botName);
     botsInstances.push(bot);
     await bot.launch();
     log.info(`Bot ${botName} launched`);
@@ -62,12 +62,12 @@ async function startUsingPolling() {
   process.once('SIGTERM', () => closeBots('SIGTERM'))
 }
 
-function initBot(botName: string): Telegraf {
+async function initBot(botName: string): Promise<Telegraf> {
   const botNameUpper = botName.toUpperCase();
   const botToken = getRequiredEnvVar(`${botNameUpper}_BOT_TOKEN`);
   const bot = new Telegraf(botToken);
   log.info(`Initializing bot ${botName}`);
-  bots[botName](bot);
+  await bots[botName](bot);
   bot.catch((err, _) => {
     log.error(`Error on bot ${botName}:`, err);
   })
