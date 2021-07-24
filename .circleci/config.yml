@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+
+  build:
+    docker:
+      - image: 'cimg/base:2021.04'
+    steps:
+      - setup_remote_docker:
+        version: 20.10.6
+      - checkout
+      - run:
+          name: Docker Publish
+          command: ./task docker-publish
+
+workflows:
+  build:
+    jobs:
+      - build

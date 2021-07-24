@@ -18,6 +18,16 @@ function docker-publish {(
   docker-compose push
 
   printf "Published version: %s\n" "${version}"
+
+  notify-version-to-deploy "${version}"
+)}
+
+function notify-version-to-deploy {(
+  curl --request POST \
+    --url "${DEPLOY_URL}" \
+    --header "${DEPLOY_AUTH}" \
+    --header 'content-type: application/json' \
+    --data "{\"parameters\":{\"run_workflow__chato-deploy\":true, \"app_version\": \"${1}\"}}"
 )}
 
 
