@@ -1,21 +1,32 @@
 import { Telegraf } from 'telegraf';
 import { getRequiredEnvVar } from '../utils'
 
+const reportsChatId: number = parseInt(getRequiredEnvVar('REPORTS_CHAT_ID'));
+
 export default async function reports(bot: Telegraf) {
-  const reportsChatId: number = parseInt(getRequiredEnvVar('REPORTS_CHAT_ID'));
+  forwardPrivateMessagesToReportsChat(bot);
+  forwardReportsRepliesToPrivateChat(bot);
+}
 
+function forwardPrivateMessagesToReportsChat(bot: Telegraf) {
   bot.on('message', async (ctx, next) => {
-    if (ctx.chat.id === reportsChatId) {
-      const msg = (ctx.message as any);
-      if (msg.reply_to_message && msg.reply_to_message.forward_from) {
-        const target = (ctx.message as any).reply_to_message.forward_from.id;
-
-        ctx.copyMessage(target);
-      }
-      return;
-    }
     if (ctx.chat.type !== 'private') return await next();
-    ctx.forwardMessage(reportsChatId);
-  })
+    await ctx.forwardMessage(reportsChatId);
+  });
+}
 
+function forwardReportsRepliesToPrivateChat(bot: Telegraf) {
+  bot.on('message', async (ctx, next) => {
+    if (ctx.chat.id !== reportsChatId) return await next();
+
+    const msg = (ctx.message as any);
+    if (messageIsReplyingAForwardedMessage(msg)) {
+      const target = (ctx.message as any).reply_to_message.forward_from.id;
+      await ctx.copyMessage(target);
+    }
+  });
+}
+
+function messageIsReplyingAForwardedMessage(msg: any) {
+  return msg.reply_to_message && msg.reply_to_message.forward_from;
 }
