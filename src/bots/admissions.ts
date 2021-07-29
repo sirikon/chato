@@ -84,7 +84,6 @@ function adsCommand(bot: Telegraf) {
 
   bot.on('message', async (ctx, next) => {
     if (!expectAnuncioIndex[ctx.chat.id]) return await next();
-
     expectAnuncioIndex[ctx.chat.id] = false;
 
     const forwardedMessage = await ctx.forwardMessage(admissionsChatId);
